@@ -9,11 +9,11 @@ MooseX::Scaffold - Template metaprogramming with Moose
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 SYNOPSIS
 
@@ -161,7 +161,8 @@ sub load_package {
     my $self = shift;
     my $package = shift;
     return 1 if Class::Inspector->loaded($package);
-    return eval "require $package;" or die $@;
+    eval "require $package;" or die $@;
+    return 1; # FIXME
 }
 
 sub load_class {
@@ -177,7 +178,7 @@ sub setup_scaffolding_import {
 
     my $scaffolder = $given{scaffolder} ||= scalar caller;
 
-    my ( $import, $unimport ) = $self->build_scaffolding_import(%given);
+    my ( $import, $unimport ) = $self->build_scaffolding_import( %given );
 
     eval "package $exporting_package;";
     croak "Couldn't open exporting package $exporting_package since: $@" if $@;
@@ -200,7 +201,11 @@ sub build_scaffolding_import {
         return if $CALLER eq 'main';
 
         # TODO Check to see if $CALLER is a Moose::Object?
-        $self->scaffold(class_package => $CALLER, %given, exporting_package => $exporting_package, @_);
+        $self->scaffold(
+            class_package => $CALLER,
+            exporting_package => $exporting_package,
+            %given, \@_
+        );
 
         goto &$chain_import if $chain_import;
     };
@@ -228,6 +233,8 @@ sub scaffold_without_load {
 
 sub scaffold {
     my $self = shift;
+    my $arguments = [];
+    $arguments = pop @_ if ref $_[-1] eq 'ARRAY';
     my %given = @_;
 
     my $class_package = $given{class_package} || $given{class};
@@ -261,12 +268,12 @@ sub scaffold {
     }
     else {
         $scaffolding_package = $scaffolder;
-        $self->_load_scaffolding_package($scaffolding_package);
+        $self->_load_scaffolding_package( $scaffolding_package );
         $scaffolder = $scaffolding_package->can('SCAFFOLD');
         croak "Unable to find method SCAFFOLD in package $scaffolding_package" unless $scaffolder;
     }
 
-    $self->_scaffold($class_package, $scaffolder, @_, scaffolding_package => $scaffolding_package);
+    $self->_scaffold( $class_package, $scaffolder, @$arguments, scaffolding_package => $scaffolding_package );
 
 }
 
