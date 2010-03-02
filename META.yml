@@ -22,8 +22,8 @@ requires:
   Carp::Clan: 0
   Class::Inspector: 0
   Moose: 0.93
-  MooseX::ClassAttribute: 0.060
+  MooseX::ClassAttribute: 0.13
 resources:
   license: http://dev.perl.org/licenses/
   repository: http://github.com/robertkrimen/moosex-scaffold/tree/master
-version: 0.04
+version: 0.05
